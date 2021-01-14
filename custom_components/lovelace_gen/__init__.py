@@ -20,6 +20,7 @@ jinja = jinja2.Environment(loader=jinja2.FileSystemLoader("/"))
 jinja.filters['fromjson'] = fromjson
 
 llgen_config = {}
+LLGEN_VARIABLES_FILE = "/config/lovelace_gen/globals.yaml"
 
 def load_yaml(fname, args={}):
     try:
@@ -29,6 +30,10 @@ def load_yaml(fname, args={}):
                 ll_gen = True
 
         if ll_gen:
+            if os.path.isfile(LLGEN_VARIABLES_FILE):
+                loaded_yaml = load_yaml(LLGEN_VARIABLES_FILE)
+                if isinstance(loaded_yaml, dict):
+                    llgen_config.update(loaded_yaml)
             stream = io.StringIO(jinja.get_template(fname).render({**args, "_global": llgen_config}))
             stream.name = fname
             return loader.yaml.load(stream, Loader=loader.SafeLineLoader) or OrderedDict()
@@ -68,7 +73,7 @@ loader.yaml.SafeLoader.add_constructor("!include", _include_yaml)
 loader.yaml.SafeLoader.add_constructor("!file", _uncache_file)
 
 async def async_setup(hass, config):
-    llgen_config.update(config.get("lovelace_gen"));
+    # llgen_config.update(config.get("lovelace_gen"));
     return True
 
 # Allow redefinition of node anchors
